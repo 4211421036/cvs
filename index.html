@@ -3,153 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Landmark Detection</title>
+    <title>Real-Time Camera Stream</title>
     <style>
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-        #videoDisplay {
-            max-width: 100%;
-            width: 640px;
-            height: 480px;
-            border: 2px solid #333;
-        }
-        .status {
-            margin-top: 10px;
-            padding: 5px 10px;
-            background-color: #f0f0f0;
-            border-radius: 4px;
-        }
-        .server-info {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #e9ecef;
-            border-radius: 4px;
+        body {
+            font-family: Arial, sans-serif;
             text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin: 20px 0;
+            color: #333;
+        }
+        img {
+            border: 2px solid #000;
+            width: 80%;
+            max-width: 640px;
+            height: auto;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Face Landmark Detection</h1>
-        <div class="server-info">
-            Server Status: <span id="serverStatus">Checking...</span>
-        </div>
-        <canvas id="videoDisplay" width="640" height="480"></canvas>
-        <div id="status" class="status">Connecting to server...</div>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('videoDisplay');
-        const ctx = canvas.getContext('2d');
-        const statusElement = document.getElementById('status');
-        const serverStatusElement = document.getElementById('serverStatus');
-        
-        // Ganti dengan URL ngrok Anda
-        const PYTHON_SERVER = '';
-
-        let isConnected = false;
-        let retryCount = 0;
-        const MAX_RETRIES = 5;
-
-        async function fetchWithTimeout(url, options = {}, timeout = 5000) {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
-            
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal
-                });
-                clearTimeout(id);
-                return response;
-            } catch (error) {
-                clearTimeout(id);
-                throw error;
-            }
-        }
-
-        async function updateFrame() {
-            if (!isConnected) return;
-            
-            try {
-                const response = await fetchWithTimeout(`${PYTHON_SERVER}/api/video`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                if (data.frame) {
-                    const img = new Image();
-                    img.onload = () => {
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        if (data.landmarks && Array.isArray(data.landmarks)) {
-                            ctx.fillStyle = 'rgb(0, 255, 0)';
-                            data.landmarks.forEach(point => {
-                                ctx.beginPath();
-                                ctx.arc(point[0], point[1], 2, 0, 2 * Math.PI);
-                                ctx.fill();
-                            });
-                        }
-
-                        statusElement.textContent = 'Connected - Receiving frames';
-                        statusElement.style.backgroundColor = '#d4edda';
-                    };
-                    img.src = 'data:image/jpeg;base64,' + data.frame;
-                }
-
-                requestAnimationFrame(updateFrame);
-            } catch (error) {
-                console.error('Error fetching frame:', error);
-                statusElement.textContent = `Connection error - Retrying...`;
-                statusElement.style.backgroundColor = '#f8d7da';
-                isConnected = false;
-                checkServer();
-            }
-        }
-
-        async function checkServer() {
-            if (retryCount >= MAX_RETRIES) {
-                serverStatusElement.textContent = 'Server unavailable';
-                serverStatusElement.style.color = 'red';
-                return;
-            }
-
-            try {
-                const response = await fetchWithTimeout(`${PYTHON_SERVER}/api/status`);
-                const data = await response.json();
-                
-                if (data.status === 'running') {
-                    serverStatusElement.textContent = 'Connected';
-                    serverStatusElement.style.color = 'green';
-                    isConnected = true;
-                    retryCount = 0;
-                    updateFrame();
-                } else {
-                    throw new Error('Server not ready');
-                }
-            } catch (error) {
-                console.error('Server check failed:', error);
-                serverStatusElement.textContent = 'Reconnecting...';
-                serverStatusElement.style.color = 'orange';
-                retryCount++;
-                setTimeout(checkServer, 2000);
-            }
-        }
-
-        // Start connection check
-        checkServer();
-    </script>
+    <h1>Real-Time Camera Stream</h1>
+    <img src="/video_feed" alt="Video Stream">
 </body>
 </html>
