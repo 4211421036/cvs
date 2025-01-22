@@ -25,5 +25,5 @@ jobs:
     - name: Start Backend
       run: |
         echo "Starting app.py with infinite loop..."
-        while true ; do sleep 30; done
         python app.py
+        while true ; do sleep 30; done
