@@ -1,29 +1,67 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, jsonify
+from flask_cors import CORS
 import cv2
+import mediapipe as mp
+import numpy as np
+import threading
+import time
+import json
 
 app = Flask(__name__)
-camera = cv2.VideoCapture(0)  # Initialize the webcam (default camera)
+CORS(app)
 
-def generate_frames():
+# Initialize MediaPipe Face Mesh
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh()
+
+# Global variables for landmark data
+landmark_data = []
+lock = threading.Lock()
+
+def process_video():
+    camera = cv2.VideoCapture(0)
+    
     while True:
         success, frame = camera.read()
         if not success:
-            break
-        else:
-            # Encode the frame to JPEG
-            _, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            # Yield as a stream of JPEG images
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            continue
+            
+        # Convert BGR to RGB
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        # Process frame with MediaPipe
+        results = face_mesh.process(rgb_frame)
+        
+        if results.multi_face_landmarks:
+            face_landmarks = results.multi_face_landmarks[0]
+            landmarks = []
+            
+            for landmark in face_landmarks.landmark:
+                landmarks.append({
+                    'x': landmark.x,
+                    'y': landmark.y,
+                    'z': landmark.z
+                })
+            
+            with lock:
+                global landmark_data
+                landmark_data = landmarks
+        
+        time.sleep(0.03)  # Limit processing rate
+
+@app.route('/landmarks')
+def get_landmarks():
+    with lock:
+        return jsonify(landmark_data)
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/video_feed')
-def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Start video processing in background thread
+    video_thread = threading.Thread(target=process_video)
+    video_thread.daemon = True
+    video_thread.start()
+    
+    app.run(host='0.0.0.0', port=5000)
