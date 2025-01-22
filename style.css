@@ -1,0 +1,16 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+#videoDisplay {
+    border: 2px solid #333;
+}
+
+#status {
+    margin-top: 10px;
+    color: green;
+    font-weight: bold;
+}
