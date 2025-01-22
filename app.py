@@ -3,8 +3,9 @@ import cv2
 
 app = Flask(__name__)
 
+# Fungsi untuk menghasilkan frame video
 def gen_frames():
-    camera = cv2.VideoCapture(0)  # Gunakan kamera default
+    camera = cv2.VideoCapture(0)  # Menggunakan kamera default
     if not camera.isOpened():
         raise RuntimeError("Camera could not be opened.")
     try:
@@ -13,7 +14,14 @@ def gen_frames():
             if not success:
                 break
             else:
-                # Proses frame di sini (misalnya, deteksi landmark wajah)
+                # Proses frame (contoh: deteksi wajah)
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+                faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+                for (x, y, w, h) in faces:
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+                
+                # Encode frame ke format JPEG
                 ret, buffer = cv2.imencode('.jpg', frame)
                 frame = buffer.tobytes()
                 yield (b'--frame\r\n'
