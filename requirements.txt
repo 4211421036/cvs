@@ -2,6 +2,6 @@ asyncio
 opencv-python
 asyncio
 websockets
-import base64
+base64
 httpserver
 signal
