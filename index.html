@@ -2,30 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Camera Stream</title>
+    <title>Streaming Live Video from Webcam to Web Using Python and OpenCV</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-        h1 {
-            margin: 20px 0;
-            color: #333;
-        }
         img {
-            border: 2px solid #000;
-            width: 80%;
-            max-width: 640px;
-            height: auto;
-            margin: 20px auto;
+            height: 720px;
+            width: 960px;
         }
     </style>
 </head>
 <body>
-    <h1>Real-Time Camera Stream</h1>
-    <img src="/video_feed" alt="Video Stream">
+    <img id="video" />
+    <script src="main.js"></script>
 </body>
 </html>
