@@ -3,52 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Landmark Detection</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Real-Time Camera Stream</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin: 20px 0;
+            color: #333;
+        }
+        img {
+            border: 2px solid #000;
+            width: 80%;
+            max-width: 640px;
+            height: auto;
+            margin: 20px auto;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Face Landmark Detection</h1>
-        <canvas id="videoDisplay" width="640" height="480"></canvas>
-        <div id="status">Connecting to server...</div>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('videoDisplay');
-        const ctx = canvas.getContext('2d');
-        const statusElement = document.getElementById('status');
-
-        const PYTHON_SERVER = ''; // Update this to your backend URL
-
-        async function fetchVideoFrame() {
-            try {
-                const response = await fetch(`${PYTHON_SERVER}/api/video`);
-                const data = await response.json();
-
-                if (data.frame) {
-                    const img = new Image();
-                    img.onload = () => {
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        if (data.landmarks) {
-                            ctx.fillStyle = 'red';
-                            data.landmarks.forEach(([x, y]) => {
-                                ctx.beginPath();
-                                ctx.arc(x, y, 2, 0, 2 * Math.PI);
-                                ctx.fill();
-                            });
-                        }
-                    };
-                    img.src = 'data:image/jpeg;base64,' + data.frame;
-                }
-            } catch (error) {
-                statusElement.textContent = 'Error connecting to server';
-                console.error(error);
-            }
-
-            requestAnimationFrame(fetchVideoFrame);
-        }
-
-        fetchVideoFrame();
-    </script>
+    <h1>Real-Time Camera Stream</h1>
+    <img src="/video_feed" alt="Video Stream">
 </body>
 </html>
