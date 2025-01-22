@@ -3,70 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Facial Landmarks</title>
+    <title>Real-Time Camera Stream</title>
     <style>
-        canvas {
-            border: 2px solid #000;
-            max-width: 100%;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
         }
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+        h1 {
+            margin: 20px 0;
+            color: #333;
+        }
+        img {
+            border: 2px solid #000;
+            width: 80%;
+            max-width: 640px;
+            height: auto;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Real-Time Facial Landmarks</h1>
-        <canvas id="videoCanvas" width="640" height="480"></canvas>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('videoCanvas');
-        const ctx = canvas.getContext('2d');
-        const video = document.createElement('video');
-
-        // Access webcam
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-                video.play();
-            })
-            .catch(err => console.error("Error accessing webcam:", err));
-
-        // Draw video frame and landmarks
-        function drawFrame() {
-            // Draw video frame
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Fetch landmarks from backend
-            fetch('http://localhost:5000/landmarks')
-                .then(response => response.json())
-                .then(landmarks => {
-                    // Draw landmarks
-                    landmarks.forEach(point => {
-                        ctx.beginPath();
-                        ctx.arc(
-                            point.x * canvas.width,
-                            point.y * canvas.height,
-                            2,
-                            0,
-                            2 * Math.PI
-                        );
-                        ctx.fillStyle = 'red';
-                        ctx.fill();
-                    });
-                })
-                .catch(err => console.error("Error fetching landmarks:", err));
-
-            requestAnimationFrame(drawFrame);
-        }
-
-        video.addEventListener('loadedmetadata', () => {
-            drawFrame();
-        });
-    </script>
+    <h1>Real-Time Camera Stream</h1>
+    <img src="/video_feed" alt="Video Stream">
 </body>
 </html>
