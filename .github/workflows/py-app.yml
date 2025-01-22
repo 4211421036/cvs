@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages and Run Server
+name: Deploy Python Backend
 
 on:
   push:
@@ -8,74 +8,20 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Python
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-    
-    - name: Install Dependencies
+
+    - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install flask flask-cors mediapipe opencv-python gunicorn pyngrok requests
-        
-    - name: Setup ngrok
-      env:
-        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+        pip install flask flask-cors
+
+    - name: Run Backend
       run: |
-        echo "Installing ngrok..."
-        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update && sudo apt install ngrok
-        echo "Configuring ngrok..."
-        ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-        
-    - name: Start Python Server
-      run: |
-        python app.py &
-        echo "Server started in background"
-        sleep 10  # Wait for server to start
-        
-    - name: Get Server URL
-      id: get-url
-      run: |
-        SERVER_URL=$(curl -s http://localhost:5000/server_info | jq -r .public_url)
-        echo "Server URL: $SERVER_URL"
-        echo "server_url=$SERVER_URL" >> $GITHUB_OUTPUT
-        
-    - name: Update Frontend with Server URL
-      run: |
-        SERVER_URL="${{ steps.get-url.outputs.server_url }}"
-        echo "Updating frontend with server URL: $SERVER_URL"
-        sed -i "s|const PYTHON_SERVER = '.*'|const PYTHON_SERVER = '$SERVER_URL'|" static/index.html
-        
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16'
-    
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./static
-        
-    - name: Display Server Information
-      run: |
-        echo "::group::Server Information"
-        echo "Public URL: ${{ steps.get-url.outputs.server_url }}"
-        echo "Frontend URL: https://4211421036.github.io/cvs/static/"
-        echo "::endgroup::"
-        
-    - name: Create Server Info File
-      run: |
-        echo "Server URL: ${{ steps.get-url.outputs.server_url }}" > static/server-info.txt
-        echo "Last Updated: $(date)" >> static/server-info.txt
-        
-    - name: Keep Server Running
-      run: |
-        while true; do
-          sleep 300
-          curl -s http://localhost:5000/server_info > /dev/null
-        done
+        nohup python app.py &
