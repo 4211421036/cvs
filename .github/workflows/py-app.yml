@@ -22,11 +22,18 @@ jobs:
       run: |
         pip install flask flask-cors gunicorn
     
-    - name: Run Backend with Gunicorn
+    - name: Start Backend
       run: |
         nohup gunicorn -w 4 -b 0.0.0.0:5000 app:app &
 
-
-    - name: Run Backend
+    - name: Install ngrok
       run: |
-        nohup python app.py &
+        wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+        unzip ngrok-stable-linux-amd64.zip
+        chmod +x ./ngrok
+
+    - name: Expose server with ngrok
+      run: |
+        ./ngrok http 5000 > /dev/null &
+        sleep 5
+        curl http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
