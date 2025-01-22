@@ -1,6 +1,2 @@
-flask==2.0.1
-flask-cors==3.0.10
-opencv-python==4.5.3.56
-mediapipe==0.8.9.1
-pyngrok==5.1.0
-requests==2.26.0
+asyncio
+opencv-python
