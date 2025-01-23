@@ -3,37 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Camera Access</title>
+  <title>Camera Stream</title>
 </head>
 <body>
-  <h1>Camera Stream</h1>
-  <video id="video" width="640" height="480" autoplay></video>
-  <script>
-    const videoElement = document.getElementById('video');
-    const ws = new WebSocket('ws://localhost:8089'); // WebSocket ke server Python
+  <video id="videoElement" autoplay></video>
 
-    // Mengakses kamera
+  <script>
+    let ws;
+    let videoElement = document.getElementById('videoElement');
+
+    // Fungsi untuk menghubungkan WebSocket
+    function connectWebSocket() {
+      ws = new WebSocket('ws://localhost:8089');
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        // Kirim sinyal bahwa kamera sudah siap
+        ws.send('camera_connected');
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket closed, trying to reconnect...');
+        setTimeout(connectWebSocket, 3000); // Coba reconnect setelah 3 detik
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket Error:', error);
+      };
+
+      ws.onmessage = (event) => {
+        // Tangani pesan dari server jika diperlukan
+        console.log('Received message:', event.data);
+      };
+    }
+
+    // Panggil fungsi untuk pertama kali
+    connectWebSocket();
+
+    // Setup video stream dari kamera
     navigator.mediaDevices.getUserMedia({ video: true })
       .then((stream) => {
         videoElement.srcObject = stream;
-        ws.onopen = () => {
-          // Kirim sinyal ke server bahwa kamera sudah siap
-          ws.send('camera_connected');
-        };
       })
-      .catch((err) => {
-        console.log('Error accessing camera:', err);
+      .catch((error) => {
+        console.error("Error accessing webcam:", error);
       });
 
-    // Kirim data video ke server (optional)
+    // Kirim frame video ke server WebSocket jika koneksi terbuka
     setInterval(() => {
-      // Kirim frame gambar (bisa berupa frame data jika perlu)
-      const canvas = document.createElement('canvas');
-      canvas.width = 640;
-      canvas.height = 480;
-      canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-      const frame = canvas.toDataURL('image/jpeg'); // Bisa dikirim dalam bentuk base64
-      ws.send(frame);
+      if (ws.readyState === WebSocket.OPEN) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 640;
+        canvas.height = 480;
+        canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        const frame = canvas.toDataURL('image/jpeg'); // Kirim data dalam format base64
+        ws.send(frame);
+      } else {
+        console.log('WebSocket not open, skipping frame send');
+      }
     }, 100);
   </script>
 </body>
