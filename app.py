@@ -2,12 +2,18 @@ import asyncio
 import websockets
 import cv2
 import base64
-from camera import Camera
+from camera import Camera, MockCamera  # Import MockCamera
 from httpserver import HttpServer
 import signal
 import json
+import os
 
-camera = Camera(0)
+# Use MockCamera in CI/CD environment
+if "GITHUB_ACTIONS" in os.environ:
+    camera = MockCamera(0)
+else:
+    camera = Camera(0)
+
 httpserver = HttpServer(8088)
 clients = set()
 
@@ -24,10 +30,9 @@ async def send(websocket):
     frame = camera.get_frame()
     faces = camera.get_faces()
     ret, encoded = cv2.imencode(".png", frame)
-    if (ret):
+    if ret:
         base64Frame = base64.b64encode(encoded).decode("ascii")
         try:
-            # await websocket.send(base64Frame)
             payload = {}
             payload['frame'] = base64Frame
             payload['faces'] = faces
@@ -35,7 +40,7 @@ async def send(websocket):
         except (websockets.ConnectionClosed, AssertionError):
             pass
     else:
-        print("failed to encode frame")
+        print("Failed to encode frame")
 
 
 async def broadcast():
@@ -46,10 +51,7 @@ async def broadcast():
 
 
 async def main():
-    # This restores the default Ctrl+C signal handler, which just kills the process
-    # This is a workaround with the problem of asyncio cleaning up the websockets with Ctrl+C
-    # Remove this line and it will shutdown gracefully if no client is connected but will not once a connection is made
-    # TODO find a better way to gracefully clean-up and shutdown
+    # Graceful shutdown setup
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     try:
@@ -60,6 +62,7 @@ async def main():
     except (KeyboardInterrupt, asyncio.CancelledError):
         httpserver.stop()
         camera.stop()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
