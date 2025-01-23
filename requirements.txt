@@ -4,3 +4,4 @@ asyncio
 websockets
 httpserver
 numpy
+aiohttp
