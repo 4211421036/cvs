@@ -60,8 +60,8 @@ async def handler(websocket):
 
 
 async def main():
-    async with websockets.serve(handler, "localhost", 8089):
-        await asyncio.Future()  # Run forever
+    async with websockets.serve(handler, "0.0.0.0", 5000, max_size=None):
+        await broadcast()
 
 
 if __name__ == "__main__":
