@@ -2,30 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Camera Stream</title>
+    <title>Webcam Video Stream</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-        h1 {
-            margin: 20px 0;
-            color: #333;
-        }
-        img {
-            border: 2px solid #000;
-            width: 80%;
-            max-width: 640px;
+        video {
+            width: 100%;
             height: auto;
-            margin: 20px auto;
         }
     </style>
 </head>
 <body>
-    <h1>Real-Time Camera Stream</h1>
-    <img src="/video_feed" alt="Video Stream">
+    <h1>Live Video from Camera</h1>
+    <video id="video" autoplay></video>
+    <script>
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Error accessing the camera: ", err);
+            }
+        }
+
+        startCamera();
+    </script>
 </body>
 </html>
