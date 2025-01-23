@@ -1,54 +1,44 @@
 import asyncio
 import websockets
 import cv2
+import base64
 import numpy as np
-
-connected_clients = set()
+import io
+from aiohttp import web
 
 async def detect_face(websocket, path):
-    global connected_clients
-    connected_clients.add(websocket)
+    # Baca frame dari WebSocket
     try:
         while True:
-            message = await websocket.recv()
-            if message == 'camera_connected':
-                # Kamera sudah terhubung, mulai proses frame dari OpenCV
-                print("Camera connected, starting face detection...")
-                cap = cv2.VideoCapture(0)  # Mengakses kamera
+            frame_data = await websocket.recv()
+            # Mengkonversi base64 frame menjadi gambar
+            img_data = base64.b64decode(frame_data.split(',')[1])  # Hapus bagian 'data:image/jpeg;base64,'
+            img = np.array(bytearray(img_data), dtype=np.uint8)
+            img = cv2.imdecode(img, cv2.IMREAD_COLOR)
 
-                if not cap.isOpened():
-                    print("Error: Camera not found or cannot be opened.")
-                    break
+            # Deteksi wajah di frame
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            faces = face_cascade.detectMultiScale(gray, 1.1, 4)
 
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        print("Failed to capture frame")
-                        break
+            for (x, y, w, h) in faces:
+                cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
-                    # Deteksi wajah (bisa disesuaikan dengan model deteksi wajah Anda)
-                    faces = detect_faces(frame)
+            # Mengirim kembali gambar yang telah diproses sebagai base64
+            _, buffer = cv2.imencode('.jpg', img)
+            jpg_as_base64 = base64.b64encode(buffer).decode('utf-8')
+            await websocket.send(f"data:image/jpeg;base64,{jpg_as_base64}")
 
-                    # Kirim frame ke klien
-                    await websocket.send(frame.tobytes())  # Kirim data frame (pastikan formatnya sesuai)
-            else:
-                print(f"Received message: {message}")
     except websockets.ConnectionClosed:
-        print("Connection closed")
-    finally:
-        connected_clients.remove(websocket)
-
-def detect_faces(frame):
-    # Deteksi wajah (ini contoh sederhana)
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    return faces
+        print("WebSocket connection closed")
+    except Exception as e:
+        print(f"Error: {e}")
 
 async def main():
-    async with websockets.serve(detect_face, "localhost", 8089):
-        print("WebSocket server started at ws://localhost:8089")
-        await asyncio.Future()  # Menunggu selamanya
+    # Menjalankan server WebSocket di localhost:8089
+    server = await websockets.serve(detect_face, "localhost", 8089)
+    print("WebSocket server started at ws://localhost:8089")
+    await server.wait_closed()
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# Jalankan server WebSocket
+asyncio.get_event_loop().run_until_complete(main())
