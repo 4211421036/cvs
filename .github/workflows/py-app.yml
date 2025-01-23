@@ -26,8 +26,6 @@ jobs:
     - name: Run app
       env:
         GITHUB_ACTIONS: true
-        
-    - name: Start Backend
       run: |
         echo "Starting app.py with infinite loop..."
         python app.py
