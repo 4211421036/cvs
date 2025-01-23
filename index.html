@@ -2,18 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streaming Live Video from Webcam to Web Using Python and OpenCV</title>
+    <title>Landmark Detection</title>
     <style>
         img {
+            display: block;
+            margin: auto;
             height: 720px;
             width: 960px;
+        }
+        canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
         }
     </style>
 </head>
 <body>
-    <img id="video" />
+    <h1 style="text-align: center;">Real-time Face Landmark Detection</h1>
+    <div style="position: relative; width: 960px; margin: auto;">
+        <img id="video" />
+        <canvas id="landmarkCanvas" width="960" height="720"></canvas>
+    </div>
     <script src="main.js"></script>
 </body>
 </html>
