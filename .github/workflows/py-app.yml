@@ -24,10 +24,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install websockets opencv-python mediapipe
+          pip install websockets opencv-python mediapipe flask
           npm install -g wscat
 
-      - name: Start HTTP server
+      - name: Start HTTP server for frontend
         run: |
           nohup python -m http.server 8080 &
           echo "HTTP server started at http://localhost:8080"
@@ -35,7 +35,12 @@ jobs:
       - name: Run WebSocket server
         run: |
           export USE_MOCK_CAMERA=true
-          ls /dev/video*
-          docker run --device=/dev/video0:/dev/video0 -v $(pwd):/app python:3.9 bash -c "pip install -r /app/requirements.txt && python /app/app.py"
+          # Run the WebSocket server on port 8089
+          nohup python /app/app.py & 
+          echo "WebSocket server started at ws://localhost:8089"
+      
+      - name: Connect to WebSocket server with wscat
+        run: |
+          # Test WebSocket connection
           npx wscat -c ws://localhost:8089 || echo "WebSocket connection failed"
           sleep 60m
