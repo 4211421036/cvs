@@ -1,32 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webcam Video Stream</title>
-    <style>
-        video {
-            width: 100%;
-            height: auto;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera Access</title>
 </head>
 <body>
-    <h1>Live Video from Camera</h1>
-    <video id="video" autoplay></video>
-    <script>
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.getElementById('video');
-                video.srcObject = stream;
-            } catch (err) {
-                console.error("Error accessing the camera: ", err);
-            }
-        }
+  <h1>Camera Stream</h1>
+  <video id="video" width="640" height="480" autoplay></video>
+  <script>
+    const videoElement = document.getElementById('video');
+    const ws = new WebSocket('ws://localhost:8089'); // WebSocket ke server Python
 
-        startCamera();
-    </script>
+    // Mengakses kamera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        videoElement.srcObject = stream;
+        ws.onopen = () => {
+          // Kirim sinyal ke server bahwa kamera sudah siap
+          ws.send('camera_connected');
+        };
+      })
+      .catch((err) => {
+        console.log('Error accessing camera:', err);
+      });
+
+    // Kirim data video ke server (optional)
+    setInterval(() => {
+      // Kirim frame gambar (bisa berupa frame data jika perlu)
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 480;
+      canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      const frame = canvas.toDataURL('image/jpeg'); // Bisa dikirim dalam bentuk base64
+      ws.send(frame);
+    }, 100);
+  </script>
 </body>
 </html>
