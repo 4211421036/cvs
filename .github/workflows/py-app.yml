@@ -35,4 +35,5 @@ jobs:
         run: |
           nohup python app.py &
           echo "WebSocket server started at ws://localhost:8089"
+          curl ws://localhost:8089
           sleep 60m
