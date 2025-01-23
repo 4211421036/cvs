@@ -36,7 +36,7 @@ jobs:
         run: |
           export USE_MOCK_CAMERA=true
           # Run the WebSocket server on port 8089
-          nohup python /app/app.py & 
+          nohup python app.py & 
           echo "WebSocket server started at ws://localhost:8089"
       
       - name: Connect to WebSocket server with wscat
