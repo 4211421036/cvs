@@ -3,4 +3,3 @@ opencv-python
 asyncio
 websockets
 httpserver
-signal
