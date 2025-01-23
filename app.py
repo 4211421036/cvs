@@ -1,50 +1,54 @@
-import cv2
-import numpy as np
-import base64
 import asyncio
 import websockets
-import json
-from flask import Flask, render_template
+import cv2
+import numpy as np
 
-app = Flask(__name__)
+connected_clients = set()
 
 async def detect_face(websocket, path):
-    # Load the pre-trained face detection model
+    global connected_clients
+    connected_clients.add(websocket)
+    try:
+        while True:
+            message = await websocket.recv()
+            if message == 'camera_connected':
+                # Kamera sudah terhubung, mulai proses frame dari OpenCV
+                print("Camera connected, starting face detection...")
+                cap = cv2.VideoCapture(0)  # Mengakses kamera
+
+                if not cap.isOpened():
+                    print("Error: Camera not found or cannot be opened.")
+                    break
+
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        print("Failed to capture frame")
+                        break
+
+                    # Deteksi wajah (bisa disesuaikan dengan model deteksi wajah Anda)
+                    faces = detect_faces(frame)
+
+                    # Kirim frame ke klien
+                    await websocket.send(frame.tobytes())  # Kirim data frame (pastikan formatnya sesuai)
+            else:
+                print(f"Received message: {message}")
+    except websockets.ConnectionClosed:
+        print("Connection closed")
+    finally:
+        connected_clients.remove(websocket)
+
+def detect_faces(frame):
+    # Deteksi wajah (ini contoh sederhana)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    return faces
 
-    while True:
-        try:
-            # Receive image from client
-            image_data = await websocket.recv()
-            img_data = base64.b64decode(image_data)
-            nparr = np.frombuffer(img_data, np.uint8)
-            frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+async def main():
+    async with websockets.serve(detect_face, "localhost", 8089):
+        print("WebSocket server started at ws://localhost:8089")
+        await asyncio.Future()  # Menunggu selamanya
 
-            # Detect faces
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.1, 4)
-
-            # Draw rectangle around faces
-            for (x, y, w, h) in faces:
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-
-            # Convert frame to base64 for sending to the client
-            _, buffer = cv2.imencode('.png', frame)
-            frame_b64 = base64.b64encode(buffer).decode('utf-8')
-
-            # Send the frame with face annotations back to the client
-            await websocket.send(json.dumps({'frame': frame_b64}))
-
-        except Exception as e:
-            print(f"Error: {e}")
-            break
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-if __name__ == '__main__':
-    # Start Flask app and WebSocket server
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(websockets.serve(detect_face, 'localhost', 8089))
-    app.run(host='0.0.0.0', port=8080)
+if __name__ == "__main__":
+    asyncio.run(main())
