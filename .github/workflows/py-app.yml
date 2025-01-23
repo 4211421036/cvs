@@ -34,6 +34,6 @@ jobs:
 
       - name: Run WebSocket server
         run: |
-          nohup python app.py &
+          docker run --device=/dev/video0:/dev/video0 -v $(pwd):/app python:3.9 bash -c "pip install -r /app/requirements.txt && python /app/app.py"
           npx wscat -c ws://localhost:8089 || echo "WebSocket connection failed"
           sleep 60m
