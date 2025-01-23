@@ -1,32 +1,40 @@
-name: Deploy Python Backend
+name: Python App
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Run app
-      env:
-        GITHUB_ACTIONS: true
-      run: |
-        echo "Starting app.py with infinite loop..."
-        python app.py
-        while true ; do sleep 30; done
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install websockets opencv-python mediapipe
+
+      - name: Start HTTP server
+        run: |
+          nohup python -m http.server 8080 &
+          echo "HTTP server started at http://localhost:8080"
+
+      - name: Run WebSocket server
+        run: |
+          nohup python app.py &
+          echo "WebSocket server started at ws://localhost:8089"
+
+      - name: Keep workflow alive for manual testing
+        run: sleep 60m
