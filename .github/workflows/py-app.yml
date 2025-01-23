@@ -35,6 +35,4 @@ jobs:
         run: |
           nohup python app.py &
           echo "WebSocket server started at ws://localhost:8089"
-
-      - name: Keep workflow alive for manual testing
-        run: sleep 60m
+          sleep 60m
