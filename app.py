@@ -7,6 +7,15 @@ import signal
 from camera import Camera
 from httpserver import HttpServer
 
+import os
+from camera import Camera, MockCamera
+
+# Gunakan MockCamera jika kamera fisik tidak tersedia
+if os.environ.get("USE_MOCK_CAMERA", "false").lower() == "true":
+    camera = MockCamera(0)
+else:
+    camera = Camera(0)
+
 # Inisialisasi komponen
 camera = Camera(0)
 httpserver = HttpServer(8088)
