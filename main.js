@@ -2,7 +2,7 @@ let img = document.getElementById("video");
 let canvas = document.getElementById("landmarkCanvas");
 let ctx = canvas.getContext("2d");
 
-const ws = new WebSocket("ws://localhost:8089");
+const ws = new WebSocket("ws://localhost:5000");
 
 ws.onmessage = (event) => {
     let payload = JSON.parse(event.data);
