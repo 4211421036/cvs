@@ -2,7 +2,7 @@ import asyncio
 import websockets
 import cv2
 import base64
-from camera import Camera, MockCamera  # Import MockCamera
+from camera import Camera, MockCamera
 from httpserver import HttpServer
 import signal
 import json
